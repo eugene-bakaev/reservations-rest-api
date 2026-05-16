@@ -9,6 +9,7 @@ function makeDeps(opts: {
 }) {
   const amenityQ: AmenityQueries = {
     findById: jest.fn(async () => opts.amenity),
+    findManyByIds: jest.fn(),
     countAll: jest.fn(),
     insertMany: jest.fn(),
   };

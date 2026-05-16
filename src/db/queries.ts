@@ -1,9 +1,10 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { DB } from '../config/db';
 import { amenities, reservations, users, type Amenity, type Reservation, type User, type NewUser } from './schema';
 
 export type AmenityQueries = {
   findById(id: number): Promise<Amenity | undefined>;
+  findManyByIds(ids: number[]): Promise<Amenity[]>;
   countAll(): Promise<number>;
   insertMany(rows: Amenity[]): Promise<void>;
 };
@@ -33,6 +34,10 @@ export function makeAmenityQueries(db: DB): AmenityQueries {
     async findById(id) {
       const rows = await db.select().from(amenities).where(eq(amenities.id, id)).limit(1);
       return rows[0];
+    },
+    async findManyByIds(ids) {
+      if (ids.length === 0) return [];
+      return db.select().from(amenities).where(inArray(amenities.id, ids));
     },
     async countAll() {
       const [row] = await db

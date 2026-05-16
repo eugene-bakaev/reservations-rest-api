@@ -7,7 +7,10 @@ function makeDeps(opts: {
   reservations: Reservation[];
 }) {
   const amenityQ: AmenityQueries = {
-    findById: jest.fn(async (id: number) => opts.amenitiesById[id]),
+    findById: jest.fn(),
+    findManyByIds: jest.fn(async (ids: number[]) =>
+      ids.map((id) => opts.amenitiesById[id]).filter((amenity): amenity is Amenity => Boolean(amenity)),
+    ),
     countAll: jest.fn(),
     insertMany: jest.fn(),
   };

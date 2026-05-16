@@ -15,11 +15,8 @@ export async function getUserReservations(
   if (rows.length === 0) return {};
 
   const uniqueAmenityIds = Array.from(new Set(rows.map((reservation) => reservation.amenityId)));
-  const amenityById = new Map<number, string>();
-  for (const id of uniqueAmenityIds) {
-    const amenity = await deps.amenityQ.findById(id);
-    if (amenity) amenityById.set(id, amenity.name);
-  }
+  const amenities = await deps.amenityQ.findManyByIds(uniqueAmenityIds);
+  const amenityById = new Map(amenities.map((amenity) => [amenity.id, amenity.name]));
 
   const grouped: UserReservationsResponse = {};
   for (const reservation of rows) {

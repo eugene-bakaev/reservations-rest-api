@@ -9,6 +9,7 @@ function makeFakeQueries(initialCount = 0) {
 
   const amenityQ: AmenityQueries = {
     findById: jest.fn(),
+    findManyByIds: jest.fn(),
     countAll: jest.fn(async () => amenityCount),
     insertMany: jest.fn(async (rows) => { insertedAmenities.push(...rows); amenityCount += rows.length; }),
   };
