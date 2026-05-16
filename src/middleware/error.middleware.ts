@@ -11,6 +11,10 @@ export function errorHandler(
     res.status(err.statusCode).json({ error: err.message });
     return;
   }
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({ error: `Invalid JSON body: ${err.message}` });
+    return;
+  }
   console.error('[error.middleware] unexpected error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
 }

@@ -3,6 +3,7 @@ import express, { Application } from 'express';
 import { errorHandler } from './middleware/error.middleware';
 import { makeAmenityRouter } from './routes/amenity.routes';
 import { makeUserRouter } from './routes/user.routes';
+import { makeCsvRouter } from './routes/csv.routes';
 import type { AmenityServiceDeps } from './services/amenity.service';
 import type { UserServiceDeps } from './services/user.service';
 
@@ -18,6 +19,7 @@ export function createApp(deps: AppDeps): Application {
 
   app.use('/amenities', makeAmenityRouter(deps));
   app.use('/users', makeUserRouter(deps));
+  app.use('/csv', makeCsvRouter());
 
   app.use(errorHandler);
   return app;
