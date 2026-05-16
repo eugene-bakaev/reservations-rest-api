@@ -1,4 +1,4 @@
-import { minutesToHHMM, calcDuration } from '@/utils/time';
+import { minutesToHHMM, calcDuration, toUtcDateString } from '@/utils/time';
 
 describe('minutesToHHMM', () => {
   it('formats 0 minutes as 00:00', () => {
@@ -33,5 +33,14 @@ describe('calcDuration', () => {
   });
   it('throws when end is before start', () => {
     expect(() => calcDuration(500, 400)).toThrow();
+  });
+});
+
+describe('toUtcDateString', () => {
+  it('formats midnight UTC timestamp as YYYY-MM-DD', () => {
+    expect(toUtcDateString(1593561600000)).toBe('2020-07-01');
+  });
+  it('formats 2020-06-04 UTC', () => {
+    expect(toUtcDateString(1591228800000)).toBe('2020-06-04');
   });
 });

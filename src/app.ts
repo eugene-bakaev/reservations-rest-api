@@ -2,9 +2,11 @@ import 'express-async-errors';
 import express, { Application } from 'express';
 import { errorHandler } from './middleware/error.middleware';
 import { makeAmenityRouter } from './routes/amenity.routes';
+import { makeUserRouter } from './routes/user.routes';
 import type { AmenityServiceDeps } from './services/amenity.service';
+import type { UserServiceDeps } from './services/user.service';
 
-export type AppDeps = AmenityServiceDeps;
+export type AppDeps = AmenityServiceDeps & UserServiceDeps;
 
 export function createApp(deps: AppDeps): Application {
   const app = express();
@@ -15,6 +17,7 @@ export function createApp(deps: AppDeps): Application {
   });
 
   app.use('/amenities', makeAmenityRouter(deps));
+  app.use('/users', makeUserRouter(deps));
 
   app.use(errorHandler);
   return app;
