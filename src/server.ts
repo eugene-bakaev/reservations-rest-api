@@ -4,6 +4,7 @@ import { loadEnv } from './config/env';
 import { getDb } from './config/db';
 import { makeAmenityQueries, makeReservationQueries, makeUserQueries } from './db/queries';
 import { seedIfEmpty, seedLegacyUsersIfEmpty, loadSeedFiles } from './db/seed';
+import { makeJwtSigner } from './services/token.service';
 
 async function main(): Promise<void> {
   const env = loadEnv();
@@ -15,7 +16,8 @@ async function main(): Promise<void> {
   await seedIfEmpty({ amenityQ, reservationQ, ...loadSeedFiles() });
   await seedLegacyUsersIfEmpty({ userQ, reservationQ });
 
-  const app = createApp({ amenityQ, reservationQ, userQ, jwtSecret: env.JWT_SECRET });
+  const signer = makeJwtSigner(env.JWT_SECRET);
+  const app = createApp({ amenityQ, reservationQ, userQ, signer });
   app.listen(env.PORT, () => {
     console.info(`API listening on http://localhost:${env.PORT}`);
   });

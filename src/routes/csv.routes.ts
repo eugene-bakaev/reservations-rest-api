@@ -5,12 +5,13 @@ import { parseCsvStream } from '../services/csv.service';
 import { JsonArrayTransform } from '../streams/json-array-transform';
 import { makeAuthGuard } from '../middleware/auth.middleware';
 import { ValidationError } from '../utils/errors';
+import type { TokenSigner } from '../services/token.service';
 
 const ACCEPTED_CONTENT_TYPES = ['text/csv', 'application/csv'];
 
-export function makeCsvRouter(deps: { jwtSecret: string }): Router {
+export function makeCsvRouter(deps: { signer: TokenSigner }): Router {
   const router = Router();
-  const guard = makeAuthGuard({ jwtSecret: deps.jwtSecret });
+  const guard = makeAuthGuard({ signer: deps.signer });
 
   router.post('/parse', guard, async (req: Request, res: Response, next: NextFunction) => {
     const contentType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();

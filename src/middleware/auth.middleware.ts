@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { verifyToken } from '../services/auth.service';
 import { UnauthorizedError } from '../utils/errors';
+import type { TokenSigner } from '../services/token.service';
 
-export function makeAuthGuard(deps: { jwtSecret: string }): RequestHandler {
+export function makeAuthGuard(deps: { signer: TokenSigner }): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const header = req.headers.authorization;
@@ -11,7 +11,7 @@ export function makeAuthGuard(deps: { jwtSecret: string }): RequestHandler {
       if (scheme !== 'Bearer' || !token) {
         throw new UnauthorizedError('Authorization header must use Bearer scheme');
       }
-      res.locals.user = verifyToken(token, deps.jwtSecret);
+      res.locals.user = deps.signer.verify(token);
       next();
     } catch (err) {
       next(err);

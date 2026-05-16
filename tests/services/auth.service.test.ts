@@ -1,9 +1,10 @@
-import { registerUser, loginUser, verifyToken } from '@/services/auth.service';
+import { registerUser, loginUser } from '@/services/auth.service';
+import { makeJwtSigner } from '@/services/token.service';
 import { ConflictError, UnauthorizedError } from '@/utils/errors';
 import type { UserQueries } from '@/db/queries';
 import type { User } from '@/db/schema';
 
-const JWT_SECRET = 'test-secret-must-be-long-enough';
+const signer = makeJwtSigner('test-secret-must-be-long-enough');
 
 function makeUserQ(initial?: User): UserQueries {
   const store = new Map<string, User>();
@@ -28,7 +29,7 @@ function makeUserQ(initial?: User): UserQueries {
 describe('registerUser', () => {
   it('creates a user and returns id + username', async () => {
     const userQ = makeUserQ();
-    const result = await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, jwtSecret: JWT_SECRET });
+    const result = await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, signer });
     expect(result).toEqual({ id: 1, username: 'alice' });
     expect(userQ.insert).toHaveBeenCalledTimes(1);
     const insertArg = (userQ.insert as jest.Mock).mock.calls[0][0];
@@ -39,7 +40,7 @@ describe('registerUser', () => {
   it('throws ConflictError when username already exists', async () => {
     const userQ = makeUserQ({ id: 1, username: 'alice', passwordHash: 'h', createdAt: new Date() });
     await expect(
-      registerUser({ username: 'alice', password: 'pw_long' }, { userQ, jwtSecret: JWT_SECRET }),
+      registerUser({ username: 'alice', password: 'pw_long' }, { userQ, signer }),
     ).rejects.toThrow(ConflictError);
   });
 });
@@ -47,13 +48,10 @@ describe('registerUser', () => {
 describe('loginUser', () => {
   it('returns a JWT for valid credentials', async () => {
     const userQ = makeUserQ();
-    await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, jwtSecret: JWT_SECRET });
-    const { token } = await loginUser(
-      { username: 'alice', password: 'hunter2!' },
-      { userQ, jwtSecret: JWT_SECRET },
-    );
+    await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, signer });
+    const { token } = await loginUser({ username: 'alice', password: 'hunter2!' }, { userQ, signer });
     expect(typeof token).toBe('string');
-    const payload = verifyToken(token, JWT_SECRET);
+    const payload = signer.verify(token);
     expect(payload.username).toBe('alice');
     expect(payload.userId).toBe(1);
   });
@@ -61,21 +59,15 @@ describe('loginUser', () => {
   it('throws UnauthorizedError for unknown username', async () => {
     const userQ = makeUserQ();
     await expect(
-      loginUser({ username: 'nobody', password: 'whatever' }, { userQ, jwtSecret: JWT_SECRET }),
+      loginUser({ username: 'nobody', password: 'whatever' }, { userQ, signer }),
     ).rejects.toThrow(UnauthorizedError);
   });
 
   it('throws UnauthorizedError for wrong password', async () => {
     const userQ = makeUserQ();
-    await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, jwtSecret: JWT_SECRET });
+    await registerUser({ username: 'alice', password: 'hunter2!' }, { userQ, signer });
     await expect(
-      loginUser({ username: 'alice', password: 'wrong000' }, { userQ, jwtSecret: JWT_SECRET }),
+      loginUser({ username: 'alice', password: 'wrong000' }, { userQ, signer }),
     ).rejects.toThrow(UnauthorizedError);
-  });
-});
-
-describe('verifyToken', () => {
-  it('throws UnauthorizedError on invalid token', () => {
-    expect(() => verifyToken('not-a-token', JWT_SECRET)).toThrow(UnauthorizedError);
   });
 });

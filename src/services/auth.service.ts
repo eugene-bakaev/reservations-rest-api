@@ -1,15 +1,14 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { ConflictError, UnauthorizedError } from '../utils/errors';
 import type { UserQueries } from '../db/queries';
 import type { Credentials } from '../schemas/auth.schema';
+import type { AuthTokenPayload, TokenSigner } from './token.service';
+
+export type { AuthTokenPayload } from './token.service';
 
 const BCRYPT_COST = 10;
-const TOKEN_TTL = '24h';
 
-export type AuthTokenPayload = { userId: number; username: string };
-
-export type AuthServiceDeps = { userQ: UserQueries; jwtSecret: string };
+export type AuthServiceDeps = { userQ: UserQueries; signer: TokenSigner };
 
 export async function registerUser(
   credentials: Credentials,
@@ -34,18 +33,5 @@ export async function loginUser(
   if (!passwordMatches) throw new UnauthorizedError('Invalid credentials');
 
   const payload: AuthTokenPayload = { userId: user.id, username: user.username };
-  const token = jwt.sign(payload, deps.jwtSecret, { expiresIn: TOKEN_TTL });
-  return { token };
-}
-
-export function verifyToken(token: string, jwtSecret: string): AuthTokenPayload {
-  try {
-    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload & AuthTokenPayload;
-    if (typeof decoded.userId !== 'number' || typeof decoded.username !== 'string') {
-      throw new UnauthorizedError('Invalid token payload');
-    }
-    return { userId: decoded.userId, username: decoded.username };
-  } catch {
-    throw new UnauthorizedError('Invalid or expired token');
-  }
+  return { token: deps.signer.sign(payload) };
 }
