@@ -4,8 +4,6 @@ import type { UserQueries } from '../db/queries';
 import type { Credentials } from '../schemas/auth.schema';
 import type { AuthTokenPayload, TokenSigner } from './token.service';
 
-export type { AuthTokenPayload } from './token.service';
-
 const BCRYPT_COST = 10;
 
 export type AuthServiceDeps = { userQ: UserQueries; signer: TokenSigner };

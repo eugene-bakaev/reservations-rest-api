@@ -27,7 +27,7 @@ export async function getUserReservations(
     const item: UserReservationItem = {
       id: reservation.id,
       amenityId: reservation.amenityId,
-      amenityName: amenityById.get(reservation.amenityId) ?? '',
+      amenityName: amenityById.get(reservation.amenityId)!,
       startTime: minutesToHHMM(reservation.startTime),
       duration: calcDuration(reservation.startTime, reservation.endTime),
     };

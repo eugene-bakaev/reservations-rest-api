@@ -35,8 +35,10 @@ export function makeAmenityQueries(db: DB): AmenityQueries {
       return rows[0];
     },
     async countAll() {
-      const rows = await db.select().from(amenities);
-      return rows.length;
+      const [row] = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(amenities);
+      return row?.count ?? 0;
     },
     async insertMany(rows) {
       if (rows.length === 0) return;
@@ -78,9 +80,8 @@ export function makeUserQueries(db: DB): UserQueries {
       return rows[0];
     },
     async insert(row) {
-      const result = await db.insert(users).values(row);
-      const insertId = (result as unknown as [{ insertId: number }])[0].insertId;
-      return { id: insertId };
+      const [{ id }] = await db.insert(users).values(row).$returningId();
+      return { id };
     },
     async countAll() {
       const [row] = await db
