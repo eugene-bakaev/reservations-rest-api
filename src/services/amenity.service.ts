@@ -28,11 +28,11 @@ export async function getAmenityReservations(
   return rows
     .slice()
     .sort((a, b) => a.startTime - b.startTime)
-    .map((r) => ({
-      id: r.id,
-      userId: r.userId,
-      startTime: minutesToHHMM(r.startTime),
-      duration: calcDuration(r.startTime, r.endTime),
+    .map((reservation) => ({
+      id: reservation.id,
+      userId: reservation.userId,
+      startTime: minutesToHHMM(reservation.startTime),
+      duration: calcDuration(reservation.startTime, reservation.endTime),
       amenityName: amenity.name,
     }));
 }
