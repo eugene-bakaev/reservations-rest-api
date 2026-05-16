@@ -13,7 +13,7 @@ async function main(): Promise<void> {
 
   await seedIfEmpty({ amenityQ, reservationQ, ...loadSeedFiles() });
 
-  const app = createApp();
+  const app = createApp({ amenityQ, reservationQ });
   app.listen(env.PORT, () => {
     console.info(`API listening on http://localhost:${env.PORT}`);
   });
