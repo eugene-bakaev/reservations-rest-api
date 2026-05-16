@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { createApp } from './app';
 import { loadEnv } from './config/env';
-import { getDb } from './config/db';
+import { getDb, closeDb } from './config/db';
 import { makeAmenityQueries, makeReservationQueries, makeUserQueries } from './db/queries';
 import { seedIfEmpty, seedLegacyUsersIfEmpty, loadSeedFiles } from './db/seed';
 import { makeJwtSigner } from './services/token.service';
@@ -18,9 +18,25 @@ async function main(): Promise<void> {
 
   const signer = makeJwtSigner(env.JWT_SECRET);
   const app = createApp({ amenityQ, reservationQ, userQ, signer });
-  app.listen(env.PORT, () => {
+  const server = app.listen(env.PORT, () => {
     console.info(`API listening on http://localhost:${env.PORT}`);
   });
+
+  const shutdown = (signal: string): void => {
+    console.info(`[server] received ${signal}, shutting down gracefully...`);
+    server.close(async (closeErr) => {
+      if (closeErr) console.error('[server] error closing HTTP server:', closeErr);
+      try {
+        await closeDb();
+      } catch (dbErr) {
+        console.error('[server] error closing DB pool:', dbErr);
+      }
+      process.exit(closeErr ? 1 : 0);
+    });
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 }
 
 main().catch((err) => {

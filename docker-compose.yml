@@ -15,5 +15,18 @@ services:
       timeout: 5s
       retries: 20
 
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-rootpassword}@mysql:3306/${MYSQL_DATABASE:-reservations}
+      JWT_SECRET: ${JWT_SECRET:-please-override-me-with-a-real-secret}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
 volumes:
   mysql-data:
