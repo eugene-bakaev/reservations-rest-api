@@ -1,20 +1,11 @@
 import { calcDuration, minutesToHHMM, toUtcDateString } from '../utils/time';
 import type { AmenityQueries, ReservationQueries } from '../db/queries';
+import type { UserReservationItem, UserReservationsResponse } from '../schemas/user.schema';
 
 export type UserServiceDeps = {
   amenityQ: AmenityQueries;
   reservationQ: ReservationQueries;
 };
-
-export type UserReservationItem = {
-  id: number;
-  amenityId: number;
-  amenityName: string;
-  startTime: string;
-  duration: number;
-};
-
-export type UserReservationsResponse = Record<string, UserReservationItem[]>;
 
 export async function getUserReservations(
   userId: number,

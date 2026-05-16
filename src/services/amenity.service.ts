@@ -1,18 +1,11 @@
 import { NotFoundError } from '../utils/errors';
 import { calcDuration, minutesToHHMM } from '../utils/time';
 import type { AmenityQueries, ReservationQueries } from '../db/queries';
+import type { FormattedReservation } from '../schemas/amenity.schema';
 
 export type AmenityServiceDeps = {
   amenityQ: AmenityQueries;
   reservationQ: ReservationQueries;
-};
-
-export type FormattedReservation = {
-  id: number;
-  userId: number;
-  startTime: string;
-  duration: number;
-  amenityName: string;
 };
 
 export async function getAmenityReservations(
