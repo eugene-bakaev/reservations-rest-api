@@ -15,6 +15,7 @@ function makeDeps(opts: {
     findByAmenityAndDate: jest.fn(),
     findByUserId: jest.fn(async () => opts.reservations),
     insertMany: jest.fn(),
+    distinctUserIds: jest.fn(),
   };
   return { amenityQ, reservationQ };
 }

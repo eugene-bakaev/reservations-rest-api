@@ -1,5 +1,6 @@
-import { seedIfEmpty } from '@/db/seed';
-import type { AmenityQueries, ReservationQueries } from '@/db/queries';
+import bcrypt from 'bcrypt';
+import { seedIfEmpty, seedLegacyUsersIfEmpty } from '@/db/seed';
+import type { AmenityQueries, ReservationQueries, UserQueries } from '@/db/queries';
 
 function makeFakeQueries(initialCount = 0) {
   let amenityCount = initialCount;
@@ -15,6 +16,7 @@ function makeFakeQueries(initialCount = 0) {
     findByAmenityAndDate: jest.fn(),
     findByUserId: jest.fn(),
     insertMany: jest.fn(async (rows) => { insertedReservations.push(...rows); }),
+    distinctUserIds: jest.fn(),
   };
 
   return { amenityQ, reservationQ, insertedAmenities, insertedReservations };
@@ -50,5 +52,82 @@ describe('seedIfEmpty', () => {
     expect(reservationQ.insertMany).not.toHaveBeenCalled();
     expect(insertedAmenities).toEqual([]);
     expect(insertedReservations).toEqual([]);
+  });
+});
+
+function makeLegacyDeps(opts: { userCount: number; distinctUserIds: number[] }) {
+  const insertedLegacy: Array<{ id: number; username: string; passwordHash: string }> = [];
+  const userQ: UserQueries = {
+    findByUsername: jest.fn(),
+    insert: jest.fn(),
+    countAll: jest.fn(async () => opts.userCount),
+    insertManyWithIds: jest.fn(async (rows) => { insertedLegacy.push(...rows); }),
+  };
+  const reservationQ: ReservationQueries = {
+    findByAmenityAndDate: jest.fn(),
+    findByUserId: jest.fn(),
+    insertMany: jest.fn(),
+    distinctUserIds: jest.fn(async () => opts.distinctUserIds),
+  };
+  return { userQ, reservationQ, insertedLegacy };
+}
+
+describe('seedLegacyUsersIfEmpty', () => {
+  it('inserts one placeholder per distinct reservation user_id when users table is empty', async () => {
+    const { userQ, reservationQ, insertedLegacy } = makeLegacyDeps({
+      userCount: 0,
+      distinctUserIds: [1, 5, 42],
+    });
+    await seedLegacyUsersIfEmpty({ userQ, reservationQ });
+    expect(insertedLegacy.map((row) => ({ id: row.id, username: row.username }))).toEqual([
+      { id: 1, username: 'legacy_user_1' },
+      { id: 5, username: 'legacy_user_5' },
+      { id: 42, username: 'legacy_user_42' },
+    ]);
+    insertedLegacy.forEach((row) => {
+      expect(row.passwordHash.length).toBeGreaterThan(20);
+    });
+  });
+
+  it('produces a unique bcrypt hash per legacy user (different salts)', async () => {
+    const { userQ, reservationQ, insertedLegacy } = makeLegacyDeps({
+      userCount: 0,
+      distinctUserIds: [1, 2, 3, 4],
+    });
+    await seedLegacyUsersIfEmpty({ userQ, reservationQ });
+    const hashes = insertedLegacy.map((row) => row.passwordHash);
+    expect(new Set(hashes).size).toBe(hashes.length);
+  });
+
+  it('every legacy user can be verified with the shared password Pass123$', async () => {
+    const { userQ, reservationQ, insertedLegacy } = makeLegacyDeps({
+      userCount: 0,
+      distinctUserIds: [1, 7, 99],
+    });
+    await seedLegacyUsersIfEmpty({ userQ, reservationQ });
+    for (const row of insertedLegacy) {
+      expect(await bcrypt.compare('Pass123$', row.passwordHash)).toBe(true);
+    }
+  });
+
+  it('skips when users table is non-empty', async () => {
+    const { userQ, reservationQ, insertedLegacy } = makeLegacyDeps({
+      userCount: 7,
+      distinctUserIds: [1, 5, 42],
+    });
+    await seedLegacyUsersIfEmpty({ userQ, reservationQ });
+    expect(userQ.insertManyWithIds).not.toHaveBeenCalled();
+    expect(reservationQ.distinctUserIds).not.toHaveBeenCalled();
+    expect(insertedLegacy).toEqual([]);
+  });
+
+  it('does not insert when reservations have no user_ids', async () => {
+    const { userQ, reservationQ, insertedLegacy } = makeLegacyDeps({
+      userCount: 0,
+      distinctUserIds: [],
+    });
+    await seedLegacyUsersIfEmpty({ userQ, reservationQ });
+    expect(userQ.insertManyWithIds).not.toHaveBeenCalled();
+    expect(insertedLegacy).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { DB } from '../config/db';
 import { amenities, reservations, users, type Amenity, type Reservation, type User, type NewUser } from './schema';
 
@@ -12,11 +12,20 @@ export type ReservationQueries = {
   findByAmenityAndDate(amenityId: number, date: number): Promise<Reservation[]>;
   findByUserId(userId: number): Promise<Reservation[]>;
   insertMany(rows: Reservation[]): Promise<void>;
+  distinctUserIds(): Promise<number[]>;
+};
+
+export type LegacyUserRow = {
+  id: number;
+  username: string;
+  passwordHash: string;
 };
 
 export type UserQueries = {
   findByUsername(username: string): Promise<User | undefined>;
   insert(row: NewUser): Promise<{ id: number }>;
+  countAll(): Promise<number>;
+  insertManyWithIds(rows: LegacyUserRow[]): Promise<void>;
 };
 
 export function makeAmenityQueries(db: DB): AmenityQueries {
@@ -53,6 +62,12 @@ export function makeReservationQueries(db: DB): ReservationQueries {
         await db.insert(reservations).values(rows.slice(i, i + CHUNK));
       }
     },
+    async distinctUserIds() {
+      const rows = await db
+        .selectDistinct({ userId: reservations.userId })
+        .from(reservations);
+      return rows.map((row) => row.userId);
+    },
   };
 }
 
@@ -66,6 +81,16 @@ export function makeUserQueries(db: DB): UserQueries {
       const result = await db.insert(users).values(row);
       const insertId = (result as unknown as [{ insertId: number }])[0].insertId;
       return { id: insertId };
+    },
+    async countAll() {
+      const [row] = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(users);
+      return row?.count ?? 0;
+    },
+    async insertManyWithIds(rows) {
+      if (rows.length === 0) return;
+      await db.insert(users).values(rows);
     },
   };
 }
