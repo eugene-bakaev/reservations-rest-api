@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import { ValidationError } from '../utils/errors';
 
 export type CsvRow = Record<string, string>;
 
@@ -14,6 +15,6 @@ export function parseCsv<T extends CsvRow = CsvRow>(input: string | Buffer): T[]
       trim: true,
     }) as T[];
   } catch (err) {
-    throw new Error(`Failed to parse CSV: ${(err as Error).message}`);
+    throw new ValidationError(`Failed to parse CSV: ${(err as Error).message}`);
   }
 }

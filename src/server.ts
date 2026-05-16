@@ -15,11 +15,11 @@ async function main(): Promise<void> {
 
   const app = createApp();
   app.listen(env.PORT, () => {
-    console.log(`API listening on http://localhost:${env.PORT}`); // eslint-disable-line no-console
+    console.info(`API listening on http://localhost:${env.PORT}`);
   });
 }
 
 main().catch((err) => {
-  console.error(err); // eslint-disable-line no-console
+  console.error(err);
   process.exit(1);
 });

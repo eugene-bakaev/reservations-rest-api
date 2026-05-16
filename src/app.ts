@@ -1,5 +1,6 @@
 import 'express-async-errors';
 import express, { Application } from 'express';
+import { errorHandler } from './middleware/error.middleware';
 
 export function createApp(): Application {
   const app = express();
@@ -9,5 +10,6 @@ export function createApp(): Application {
     res.json({ status: 'ok' });
   });
 
+  app.use(errorHandler);
   return app;
 }
