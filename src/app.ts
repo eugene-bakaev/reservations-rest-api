@@ -21,7 +21,7 @@ export function createApp(deps: AppDeps): Application {
 
   app.use('/amenities', makeAmenityRouter(deps));
   app.use('/users', makeUserRouter(deps));
-  app.use('/csv', makeCsvRouter());
+  app.use('/csv', makeCsvRouter(deps));
   app.use('/auth', makeAuthRouter(deps));
 
   app.use(errorHandler);

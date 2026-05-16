@@ -3,14 +3,16 @@ import { pipeline } from 'stream/promises';
 import { Router, Request, Response, NextFunction } from 'express';
 import { parseCsvStream } from '../services/csv.service';
 import { JsonArrayTransform } from '../streams/json-array-transform';
+import { makeAuthGuard } from '../middleware/auth.middleware';
 import { ValidationError } from '../utils/errors';
 
 const ACCEPTED_CONTENT_TYPES = ['text/csv', 'application/csv'];
 
-export function makeCsvRouter(): Router {
+export function makeCsvRouter(deps: { jwtSecret: string }): Router {
   const router = Router();
+  const guard = makeAuthGuard({ jwtSecret: deps.jwtSecret });
 
-  router.post('/parse', async (req: Request, res: Response, next: NextFunction) => {
+  router.post('/parse', guard, async (req: Request, res: Response, next: NextFunction) => {
     const contentType = (req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
     if (!ACCEPTED_CONTENT_TYPES.includes(contentType)) {
       next(new ValidationError(`Expected Content-Type ${ACCEPTED_CONTENT_TYPES.join(' or ')}`));
