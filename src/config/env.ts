@@ -11,7 +11,7 @@ export type Env = z.infer<typeof envSchema>;
 export function loadEnv(): Env {
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
-    const message = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+    const message = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new Error(`Invalid environment: ${message}`);
   }
   return result.data;

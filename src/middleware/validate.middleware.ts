@@ -18,7 +18,7 @@ export function validate(schema: ZodSchema, source: ValidationSource): RequestHa
 
 function toValidationError(err: ZodError): ValidationError {
   const message = err.issues
-    .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+    .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
     .join('; ');
   return new ValidationError(message);
 }

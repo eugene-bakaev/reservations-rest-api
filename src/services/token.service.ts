@@ -16,15 +16,16 @@ export function makeJwtSigner(secret: string): TokenSigner {
       return jwt.sign(payload, secret, { expiresIn: TOKEN_TTL });
     },
     verify(token) {
+      let decoded: jwt.JwtPayload & AuthTokenPayload;
       try {
-        const decoded = jwt.verify(token, secret) as jwt.JwtPayload & AuthTokenPayload;
-        if (typeof decoded.userId !== 'number' || typeof decoded.username !== 'string') {
-          throw new UnauthorizedError('Invalid token payload');
-        }
-        return { userId: decoded.userId, username: decoded.username };
+        decoded = jwt.verify(token, secret) as jwt.JwtPayload & AuthTokenPayload;
       } catch {
         throw new UnauthorizedError('Invalid or expired token');
       }
+      if (typeof decoded.userId !== 'number' || typeof decoded.username !== 'string') {
+        throw new UnauthorizedError('Invalid token payload');
+      }
+      return { userId: decoded.userId, username: decoded.username };
     },
   };
 }

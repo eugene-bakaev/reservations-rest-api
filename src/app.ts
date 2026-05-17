@@ -7,6 +7,7 @@ import { makeUserRouter } from './routes/user.routes';
 import { makeCsvRouter } from './routes/csv.routes';
 import { makeAuthRouter } from './routes/auth.routes';
 import { buildOpenApiSpec } from './config/swagger';
+import { NotFoundError } from './utils/errors';
 import type { AmenityServiceDeps } from './services/amenity.service';
 import type { UserServiceDeps } from './services/user.service';
 import type { AuthServiceDeps } from './services/auth.service';
@@ -32,6 +33,7 @@ export function createApp(deps: AppDeps): Application {
   });
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
+  app.use((req, _res, next) => next(new NotFoundError(`Route not found: ${req.method} ${req.path}`)));
   app.use(errorHandler);
   return app;
 }
