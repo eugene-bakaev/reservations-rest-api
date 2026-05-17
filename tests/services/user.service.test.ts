@@ -46,7 +46,7 @@ describe('getUserReservations', () => {
     expect(await getUserReservations(42, deps)).toEqual({});
   });
 
-  it('groups reservations by UTC date string, formats start time, includes amenity name', async () => {
+  it('groups reservations by UTC date string, sorts each day by start time, formats start time, includes amenity name', async () => {
     const deps = makeDeps({
       amenitiesById: { 1: { id: 1, name: 'Gym' }, 2: { id: 2, name: 'Pool' } },
       reservations: [
@@ -57,8 +57,8 @@ describe('getUserReservations', () => {
     });
     expect(await getUserReservations(42, deps)).toEqual({
       '2020-07-01': [
-        { id: 1, amenityId: 1, amenityName: 'Gym', startTime: '10:00', duration: 300 },
         { id: 2, amenityId: 2, amenityName: 'Pool', startTime: '05:00', duration: 180 },
+        { id: 1, amenityId: 1, amenityName: 'Gym', startTime: '10:00', duration: 300 },
       ],
       '2020-07-04': [
         { id: 3, amenityId: 1, amenityName: 'Gym', startTime: '12:00', duration: 360 },

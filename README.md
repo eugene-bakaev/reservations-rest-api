@@ -76,13 +76,20 @@ All reservations for user 42, grouped by day:
 curl localhost:3000/users/42/reservations
 ```
 
-Stream-parse a CSV body (auth required, `Content-Type: text/csv`):
+Stream-parse a CSV body (auth required). The body must be the raw CSV bytes with `Content-Type: text/csv` — this endpoint does not accept `multipart/form-data` uploads, since streaming the body directly keeps memory bounded for arbitrarily large files:
 
 ```sh
+# inline body
 curl -X POST localhost:3000/csv/parse \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: text/csv' \
   --data-binary $'name;value\ngym;100\npool;50'
+
+# or send a file from disk
+curl -X POST localhost:3000/csv/parse \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: text/csv' \
+  --data-binary @data/amenities.csv
 ```
 
 ## Environment variables

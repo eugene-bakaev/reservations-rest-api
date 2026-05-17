@@ -31,7 +31,9 @@ export function createApp(deps: AppDeps): Application {
   app.get('/openapi.json', (_req, res) => {
     res.json(openApiSpec);
   });
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, {
+    swaggerOptions: { persistAuthorization: true },
+  }));
 
   app.use((req, _res, next) => next(new NotFoundError(`Route not found: ${req.method} ${req.path}`)));
   app.use(errorHandler);

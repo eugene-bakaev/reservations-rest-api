@@ -25,8 +25,9 @@ export async function getUserReservations(
   const amenities = await deps.amenityQ.findManyByIds(uniqueAmenityIds);
   const amenityById = new Map(amenities.map((amenity) => [amenity.id, amenity.name]));
 
+  const sortedRows = rows.slice().sort((a, b) => a.startTime - b.startTime);
   const grouped: UserReservationsResponse = {};
-  for (const reservation of rows) {
+  for (const reservation of sortedRows) {
     const key = toUtcDateString(reservation.date);
     const item: UserReservationItem = {
       id: reservation.id,
