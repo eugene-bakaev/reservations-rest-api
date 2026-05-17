@@ -23,6 +23,7 @@ export type LegacyUserRow = {
 };
 
 export type UserQueries = {
+  findById(id: number): Promise<User | undefined>;
   findByUsername(username: string): Promise<User | undefined>;
   insert(row: NewUser): Promise<{ id: number }>;
   countAll(): Promise<number>;
@@ -80,6 +81,10 @@ export function makeReservationQueries(db: DB): ReservationQueries {
 
 export function makeUserQueries(db: DB): UserQueries {
   return {
+    async findById(id) {
+      const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      return rows[0];
+    },
     async findByUsername(username) {
       const rows = await db.select().from(users).where(eq(users.username, username)).limit(1);
       return rows[0];

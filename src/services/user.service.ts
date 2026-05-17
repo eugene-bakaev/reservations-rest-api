@@ -1,16 +1,23 @@
+import { NotFoundError } from '../utils/errors';
 import { calcDuration, minutesToHHMM, toUtcDateString } from '../utils/time';
-import type { AmenityQueries, ReservationQueries } from '../db/queries';
+import type { AmenityQueries, ReservationQueries, UserQueries } from '../db/queries';
 import type { UserReservationItem, UserReservationsResponse } from '../schemas/user.schema';
 
 export type UserServiceDeps = {
   amenityQ: AmenityQueries;
   reservationQ: ReservationQueries;
+  userQ: UserQueries;
 };
 
 export async function getUserReservations(
   userId: number,
   deps: UserServiceDeps,
 ): Promise<UserReservationsResponse> {
+  const user = await deps.userQ.findById(userId);
+  if (!user) {
+    throw new NotFoundError(`User with id ${userId} not found`);
+  }
+
   const rows = await deps.reservationQ.findByUserId(userId);
   if (rows.length === 0) return {};
 

@@ -10,6 +10,7 @@ function makeUserQ(initial?: User): UserQueries {
   const store = new Map<string, User>();
   if (initial) store.set(initial.username, initial);
   return {
+    findById: jest.fn(async (id) => Array.from(store.values()).find((user) => user.id === id)),
     findByUsername: jest.fn(async (username) => store.get(username)),
     insert: jest.fn(async (row) => {
       const id = store.size + 1;

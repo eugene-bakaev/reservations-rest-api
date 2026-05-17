@@ -1,11 +1,14 @@
 import { getUserReservations } from '@/services/user.service';
-import type { AmenityQueries, ReservationQueries } from '@/db/queries';
-import type { Amenity, Reservation } from '@/db/schema';
+import { NotFoundError } from '@/utils/errors';
+import type { AmenityQueries, ReservationQueries, UserQueries } from '@/db/queries';
+import type { Amenity, Reservation, User } from '@/db/schema';
 
 function makeDeps(opts: {
   amenitiesById: Record<number, Amenity>;
   reservations: Reservation[];
+  userExists?: boolean;
 }) {
+  const userExists = opts.userExists !== false;
   const amenityQ: AmenityQueries = {
     findById: jest.fn(),
     findManyByIds: jest.fn(async (ids: number[]) =>
@@ -20,11 +23,25 @@ function makeDeps(opts: {
     insertMany: jest.fn(),
     distinctUserIds: jest.fn(),
   };
-  return { amenityQ, reservationQ };
+  const userQ: UserQueries = {
+    findById: jest.fn(async (id: number): Promise<User | undefined> =>
+      userExists ? { id, username: `user_${id}`, passwordHash: 'h', createdAt: new Date() } : undefined,
+    ),
+    findByUsername: jest.fn(),
+    insert: jest.fn(),
+    countAll: jest.fn(),
+    insertManyWithIds: jest.fn(),
+  };
+  return { amenityQ, reservationQ, userQ };
 }
 
 describe('getUserReservations', () => {
-  it('returns an empty object when user has no reservations', async () => {
+  it('throws NotFoundError when the user does not exist', async () => {
+    const deps = makeDeps({ amenitiesById: {}, reservations: [], userExists: false });
+    await expect(getUserReservations(42, deps)).rejects.toThrow(NotFoundError);
+  });
+
+  it('returns an empty object when user exists but has no reservations', async () => {
     const deps = makeDeps({ amenitiesById: {}, reservations: [] });
     expect(await getUserReservations(42, deps)).toEqual({});
   });

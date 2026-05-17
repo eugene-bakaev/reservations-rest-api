@@ -59,6 +59,7 @@ describe('seedIfEmpty', () => {
 function makeLegacyDeps(opts: { userCount: number; distinctUserIds: number[] }) {
   const insertedLegacy: Array<{ id: number; username: string; passwordHash: string }> = [];
   const userQ: UserQueries = {
+    findById: jest.fn(),
     findByUsername: jest.fn(),
     insert: jest.fn(),
     countAll: jest.fn(async () => opts.userCount),
